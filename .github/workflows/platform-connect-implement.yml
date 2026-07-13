@@ -1,0 +1,104 @@
+name: "Platform Connect — Auto-Implement Task"
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: "Platform Connect task ID"
+        required: true
+        type: string
+      task_title:
+        description: "Task title"
+        required: true
+        type: string
+      task_description:
+        description: "Task description"
+        required: true
+        type: string
+      callback_url:
+        description: "Callback URL (POST { prUrl, branchName, taskId })"
+        required: true
+        type: string
+      branch_name:
+        description: "Branch name to create and push"
+        required: true
+        type: string
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "platform-connect[bot]"
+          git config user.email "platform-connect[bot]@users.noreply.github.com"
+
+      - name: Create branch
+        run: |
+          git checkout -b "${{ inputs.branch_name }}"
+
+      - name: Implement task with Claude
+        uses: anthropics/claude-code-action@beta
+        with:
+          mode: agent
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: claude-sonnet-4-5
+          direct_prompt: |
+            Please implement the following development task in this repository.
+
+            Task: ${{ inputs.task_title }}
+
+            Description:
+            ${{ inputs.task_description }}
+
+            Instructions:
+            - First, intelligently identify which files represent the actual user-facing project/application being worked on. Ignore platform scaffolding, boilerplate, build tools, node_modules, .platform/, .agents/, artifacts/mockup-sandbox/, and any framework configuration files that are not part of the actual application.
+            - Focus your changes ONLY on the real application files — typically the main src/ folder, HTML/CSS/JS files, or the primary framework entry points that serve the actual user-facing content.
+            - Analyse the existing codebase and follow its conventions.
+            - Make all necessary code changes to implement the task completely.
+            - Do NOT modify test configuration or CI workflows.
+            - Do NOT create temporary debug, log, or output files (e.g. output.txt, debug-test.txt) in the repository. If you need to run commands to verify your work, do not redirect their output into files that get committed.
+            - Do NOT modify or delete any .platform/, .agents/, or .github/ directories.
+            - Commit your changes with a clear, conventional commit message.
+
+      - name: Push branch
+        run: |
+          git add -A
+          git diff --staged --quiet || git commit -m "feat: implement task #${{ inputs.task_id }} — ${{ inputs.task_title }}"
+          git push origin "${{ inputs.branch_name }}"
+
+      - name: Create Pull Request
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: |
+            ## Auto-implemented by Platform Connect AI Builder
+
+            **Task ID:** ${{ inputs.task_id }}
+
+            ### Description
+            ${{ inputs.task_description }}
+
+            ---
+            *This PR was generated automatically. Review the changes before merging.*
+        run: |
+          PR_URL=$(gh pr create --title "[Platform Connect] ${{ inputs.task_title }}" --body "$PR_BODY" --base "${{ github.event.repository.default_branch }}" --head "${{ inputs.branch_name }}")
+          echo "pr_url=${PR_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Notify callback
+        if: steps.pr.outputs.pr_url != ''
+        run: |
+          curl -s -X POST "${{ inputs.callback_url }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"prUrl\": \"${{ steps.pr.outputs.pr_url }}\", \"branchName\": \"${{ inputs.branch_name }}\", \"taskId\": \"${{ inputs.task_id }}\"}"
