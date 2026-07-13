@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Dark Matter Coffee"
+version = "1.0.0"
+id = "artifacts/dark-matter-coffee"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23755
+
+[services.development]
+run = "pnpm --filter @workspace/dark-matter-coffee run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/dark-matter-coffee", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/dark-matter-coffee/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23755"
+BASE_PATH = "/"
