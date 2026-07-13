@@ -3,6 +3,7 @@ import { ArrowRight, Droplets, Flame, Clock, Beaker, CheckCircle2 } from "lucide
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -54,9 +55,12 @@ export default function Home() {
           <a href="#brewing" className="hover:text-primary transition-colors">Method</a>
           <a href="#subscription" className="hover:text-primary transition-colors">Protocol</a>
         </div>
-        <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground rounded-none font-mono uppercase tracking-widest text-xs hidden md:inline-flex">
-          Shop Now
-        </Button>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground rounded-none font-mono uppercase tracking-widest text-xs hidden md:inline-flex">
+            Shop Now
+          </Button>
+        </div>
       </motion.nav>
 
       {/* Hero Section */}
