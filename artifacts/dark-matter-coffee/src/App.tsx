@@ -1,379 +1,380 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { PricingCalculator } from "@/components/pricing-calculator";
+import { ThemeToggle } from "./components/theme-toggle";
+import { PricingCalculator } from "./components/pricing-calculator";
+import { Badge } from "./components/ui/badge";
+import { Button } from "./components/ui/button";
+import { Separator } from "./components/ui/separator";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 
-// ─── Data ────────────────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { label: "Roasts", href: "#roasts" },
+  { label: "Brew Guides", href: "#brew" },
+  { label: "Subscription", href: "#subscription" },
+  { label: "About", href: "#about" },
+];
 
 const ROASTS = [
   {
     id: 1,
-    name: "Eclipse Blend",
-    origin: "Ethiopia · Colombia",
-    notes: "Dark Chocolate · Smoked Caramel · Cedar",
+    name: "Event Horizon Espresso",
+    origin: "Ethiopia · Yirgacheffe",
     roast: "Dark",
+    notes: ["Dark Chocolate", "Smoked Caramel", "Black Cherry"],
+    price: 22,
     img: "/roast-1.jpg",
   },
   {
     id: 2,
-    name: "Nebula Light",
-    origin: "Kenya · Guatemala",
-    notes: "Bergamot · Lychee · Honeysuckle",
-    roast: "Light",
+    name: "Nebula Natural",
+    origin: "Colombia · Huila",
+    roast: "Medium",
+    notes: ["Blueberry", "Honey", "Brown Sugar"],
+    price: 20,
     img: "/roast-2.jpg",
   },
   {
     id: 3,
-    name: "Singularity",
-    origin: "Brazil · Sumatra",
-    notes: "Walnut · Brown Sugar · Tobacco Leaf",
-    roast: "Medium",
+    name: "Singularity Light",
+    origin: "Kenya · Nyeri",
+    roast: "Light",
+    notes: ["Bergamot", "Red Currant", "Jasmine"],
+    price: 24,
     img: "/roast-3.jpg",
   },
 ];
 
-const BREWS = [
+const BREW_GUIDES = [
   {
-    id: 1,
-    method: "Pour Over",
-    time: "4 min",
-    desc: "Clarity in every drop. Recommended for our light roasts.",
+    id: "pourover",
+    label: "Pour Over",
     img: "/brew-pourover.jpg",
+    ratio: "1 : 16",
+    grind: "Medium-Fine",
+    temp: "93 °C",
+    time: "3 – 4 min",
+    steps: [
+      "Pre-wet filter and discard rinse water.",
+      "Add 20 g coffee. Start timer, pour 40 g water for 30 s bloom.",
+      "Continue pouring in slow spirals to 320 g total by 2:30.",
+      "Allow drawdown to complete. Total time ≈ 3:30.",
+    ],
   },
   {
-    id: 2,
-    method: "French Press",
-    time: "8 min",
-    desc: "Full-bodied and immersive. Pairs perfectly with dark roasts.",
-    img: "/brew-frenchpress.jpg",
-  },
-  {
-    id: 3,
-    method: "Espresso",
-    time: "25 sec",
-    desc: "Concentrated intensity. The core of our Singularity blend.",
+    id: "espresso",
+    label: "Espresso",
     img: "/brew-espresso.jpg",
+    ratio: "1 : 2",
+    grind: "Fine",
+    temp: "92 °C",
+    time: "25 – 30 s",
+    steps: [
+      "Dose 18 g into a clean, dry basket.",
+      "Distribute and tamp level at ~15 kg pressure.",
+      "Lock portafilter, start shot targeting 36 g yield.",
+      "Adjust grind finer if under-extracted, coarser if bitter.",
+    ],
+  },
+  {
+    id: "frenchpress",
+    label: "French Press",
+    img: "/brew-frenchpress.jpg",
+    ratio: "1 : 15",
+    grind: "Coarse",
+    temp: "96 °C",
+    time: "4 min",
+    steps: [
+      "Add 30 g coarse-ground coffee to press.",
+      "Pour 450 g water, stir gently, place lid on (don't plunge).",
+      "Wait 4 minutes. Skim foam from surface.",
+      "Press slowly and pour immediately to stop extraction.",
+    ],
   },
 ];
 
-const FAQS = [
+const FAQ = [
   {
     q: "How fresh are the beans?",
-    a: "Every bag is roasted within 48 hours of dispatch. We never ship stale coffee.",
+    a: "Every batch is roasted to order and ships within 48 hours of roasting, ensuring peak flavour in your cup.",
   },
   {
-    q: "Can I pause my subscription?",
-    a: "Yes — pause, skip or cancel any time from your dashboard with zero penalties.",
+    q: "Can I pause or cancel my subscription?",
+    a: "Yes — pause, skip, or cancel anytime from your account dashboard with no fees or minimums.",
   },
   {
-    q: "Do you ship internationally?",
-    a: "Currently we ship across the US and Canada. International shipping is coming soon.",
+    q: "Do you offer whole bean and ground?",
+    a: "Both! Select your preference at checkout. We grind to your chosen brew method for optimal freshness.",
   },
   {
-    q: "What grind options are available?",
-    a: "Whole bean, coarse (French press), medium (drip), fine (espresso) — your choice at checkout.",
+    q: "What's your return policy?",
+    a: "If your coffee arrives damaged or you're unsatisfied, contact us within 14 days for a full replacement or refund.",
   },
 ];
 
-// ─── App ─────────────────────────────────────────────────────────────────────
-
 export default function App() {
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans antialiased">
-      {/* ── Nav ── */}
+    <div className="min-h-screen bg-background text-foreground">
+      {/* ── NAV ── */}
       <header
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-          scrolled ? "bg-background/90 backdrop-blur-md shadow-sm" : "bg-transparent"
+          scrolled
+            ? "bg-background/90 backdrop-blur border-b border-border shadow-sm"
+            : "bg-transparent"
         }`}
       >
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="#" className="text-xl font-black tracking-tighter">
-            DARK<span className="text-amber-500">MATTER</span>
-          </a>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium">
-            <a href="#roasts" className="hover:text-amber-500 transition-colors">
-              Roasts
-            </a>
-            <a href="#brew" className="hover:text-amber-500 transition-colors">
-              Brew
-            </a>
-            <a href="#pricing-calculator" className="hover:text-amber-500 transition-colors">
-              Pricing
-            </a>
-            <a href="#subscription" className="hover:text-amber-500 transition-colors">
-              Subscribe
-            </a>
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="font-bold text-lg tracking-widest uppercase">
+            Dark Matter
+          </span>
+          <nav className="hidden md:flex gap-8">
+            {NAV_LINKS.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {l.label}
+              </a>
+            ))}
           </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
-              Shop Now
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCartCount((c) => c + 1)}
+            >
+              Cart {cartCount > 0 && `(${cartCount})`}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+      {/* ── HERO ── */}
+      <section className="relative h-screen flex items-center justify-center text-center overflow-hidden">
         <img
           src="/hero-roastery.jpg"
-          alt="Roastery"
-          className="absolute inset-0 w-full h-full object-cover scale-105"
+          alt="Roastery interior"
+          className="absolute inset-0 w-full h-full object-cover brightness-[0.35]"
         />
-        <div className="absolute inset-0 bg-black/60" />
-        <div className="relative z-10 text-center text-white px-4 max-w-3xl mx-auto">
-          <Badge
-            variant="outline"
-            className="mb-6 border-amber-400/60 text-amber-300 text-xs tracking-widest uppercase"
-          >
-            Small-batch · Direct trade
+        <div className="relative z-10 max-w-3xl px-6 space-y-6">
+          <Badge variant="outline" className="border-white/40 text-white/80">
+            Specialty · Single Origin · Small Batch
           </Badge>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6">
-            Coffee at the
-            <br />
-            <span className="text-amber-400">Edge of Flavor</span>
+          <h1
+            className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+          >
+            Coffee Roasted at the
+            <span
+              className="italic block"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >
+              Edge of the Universe
+            </span>
           </h1>
-          <p className="text-lg md:text-xl text-white/80 mb-10 max-w-xl mx-auto">
-            We roast in micro-batches and ship within 48 hours — because your morning deserves
-            something extraordinary.
+          <p className="text-lg text-white/70 max-w-xl mx-auto">
+            We source rare, high-altitude beans and roast them in micro-batches
+            to coax out flavours that defy gravity.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
-              onClick={() =>
-                document.getElementById("roasts")?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              Explore Roasts
+          <div className="flex gap-4 justify-center flex-wrap">
+            <Button size="lg" asChild>
+              <a href="#roasts">Shop Roasts</a>
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/40 text-white hover:bg-white/10"
-              onClick={() =>
-                document.getElementById("pricing-calculator")?.scrollIntoView({ behavior: "smooth" })
-              }
-            >
-              See Pricing
+            <Button size="lg" variant="outline" className="text-white border-white/40 hover:bg-white/10" asChild>
+              <a href="#subscription">Subscribe & Save</a>
             </Button>
-          </div>
-        </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-6 h-10 rounded-full border-2 border-white/40 flex items-start justify-center pt-2">
-            <div className="w-1 h-2 bg-white/60 rounded-full" />
           </div>
         </div>
       </section>
 
-      {/* ── Roasts ── */}
-      <section id="roasts" className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <Badge
-              variant="outline"
-              className="mb-4 text-xs tracking-widest uppercase border-amber-600/50 text-amber-600"
-            >
-              The Collection
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-              Signature Roasts
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {ROASTS.map((r) => (
-              <Card
-                key={r.id}
-                className="group overflow-hidden border-0 shadow-md hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={r.img}
-                    alt={r.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <Badge className="absolute top-4 right-4 bg-amber-600 text-white border-0">
-                    {r.roast}
-                  </Badge>
-                </div>
-                <CardContent className="p-6">
-                  <p className="text-xs text-muted-foreground tracking-widest uppercase mb-2">
-                    {r.origin}
-                  </p>
-                  <h3 className="text-xl font-bold mb-2">{r.name}</h3>
-                  <p className="text-sm text-muted-foreground">{r.notes}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-5 w-full border-amber-600/40 hover:border-amber-600 hover:bg-amber-600/10 text-amber-700 dark:text-amber-400"
-                  >
-                    Add to Cart
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Brew Methods ── */}
-      <section id="brew" className="py-20 px-4 bg-muted/40">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <Badge
-              variant="outline"
-              className="mb-4 text-xs tracking-widest uppercase border-amber-600/50 text-amber-600"
-            >
-              The Ritual
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Brew Methods</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            {BREWS.map((b) => (
-              <div key={b.id} className="group text-center">
-                <div className="relative h-56 rounded-2xl overflow-hidden mb-5 shadow-md">
-                  <img
-                    src={b.img}
-                    alt={b.method}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                  <span className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-xs font-semibold tracking-widest uppercase">
-                    {b.time}
-                  </span>
-                </div>
-                <h3 className="text-lg font-bold mb-2">{b.method}</h3>
-                <p className="text-sm text-muted-foreground">{b.desc}</p>
+      {/* ── ROASTS ── */}
+      <section id="roasts" className="py-24 max-w-6xl mx-auto px-6">
+        <h2 className="text-3xl font-bold mb-2">Current Roasts</h2>
+        <p className="text-muted-foreground mb-10">
+          Three carefully chosen lots, roasted fresh every week.
+        </p>
+        <div className="grid md:grid-cols-3 gap-8">
+          {ROASTS.map((r) => (
+            <Card key={r.id} className="overflow-hidden group">
+              <div className="overflow-hidden h-52">
+                <img
+                  src={r.img}
+                  alt={r.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
               </div>
-            ))}
-          </div>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <Badge variant="secondary">{r.roast}</Badge>
+                  <span className="text-sm text-muted-foreground">{r.origin}</span>
+                </div>
+                <CardTitle className="mt-2">{r.name}</CardTitle>
+                <CardDescription className="flex flex-wrap gap-1 mt-1">
+                  {r.notes.map((n) => (
+                    <span
+                      key={n}
+                      className="text-xs bg-muted rounded-full px-2 py-0.5"
+                    >
+                      {n}
+                    </span>
+                  ))}
+                </CardDescription>
+              </CardHeader>
+              <CardFooter className="flex items-center justify-between">
+                <span className="font-semibold">${r.price} / 250 g</span>
+                <Button size="sm" onClick={() => setCartCount((c) => c + 1)}>
+                  Add to Cart
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </section>
 
-      {/* ── Pricing Calculator ── */}
-      <PricingCalculator />
+      <Separator />
 
-      {/* ── Subscription Banner ── */}
-      <section id="subscription" className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="relative rounded-3xl overflow-hidden">
+      {/* ── BREW GUIDES ── */}
+      <section id="brew" className="py-24 max-w-6xl mx-auto px-6">
+        <h2 className="text-3xl font-bold mb-2">Brew Guides</h2>
+        <p className="text-muted-foreground mb-10">
+          Master your method with our step-by-step recipes.
+        </p>
+        <Tabs defaultValue="pourover">
+          <TabsList className="mb-8">
+            {BREW_GUIDES.map((g) => (
+              <TabsTrigger key={g.id} value={g.id}>
+                {g.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {BREW_GUIDES.map((g) => (
+            <TabsContent key={g.id} value={g.id}>
+              <div className="grid md:grid-cols-2 gap-10 items-start">
+                <img
+                  src={g.img}
+                  alt={g.label}
+                  className="rounded-xl w-full h-72 object-cover"
+                />
+                <div>
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    {[
+                      { label: "Ratio", value: g.ratio },
+                      { label: "Grind", value: g.grind },
+                      { label: "Temp", value: g.temp },
+                    ].map((s) => (
+                      <div
+                        key={s.label}
+                        className="bg-muted rounded-lg p-3 text-center"
+                      >
+                        <p className="text-xs text-muted-foreground">{s.label}</p>
+                        <p className="font-semibold mt-0.5">{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <ol className="space-y-3">
+                    {g.steps.map((step, i) => (
+                      <li key={i} className="flex gap-3 text-sm">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+                          {i + 1}
+                        </span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Total brew time: <strong>{g.time}</strong>
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </section>
+
+      <Separator />
+
+      {/* ── SUBSCRIPTION ── */}
+      <section id="subscription" className="py-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-4">Never Run Out Again</h2>
+              <p className="text-muted-foreground mb-6">
+                Customise your cadence, choose your roast, and receive freshly
+                roasted coffee at your door on a schedule that fits your life.
+                Subscribers save 15% on every order.
+              </p>
+              <ul className="space-y-2 text-sm mb-8">
+                {[
+                  "Roasted to order within 48 hours of shipping",
+                  "Skip, pause or cancel any time",
+                  "Free delivery on all subscriptions",
+                  "Exclusive access to limited single-origin releases",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <span className="text-primary">✓</span> {item}
+                  </li>
+                ))}
+              </ul>
+              <PricingCalculator />
+            </div>
             <img
               src="/subscription.jpg"
-              alt="Subscription"
-              className="absolute inset-0 w-full h-full object-cover"
+              alt="Subscription coffee bag"
+              className="rounded-2xl w-full h-96 object-cover"
             />
-            <div className="absolute inset-0 bg-black/65" />
-            <div className="relative z-10 p-10 md:p-16 text-white text-center">
-              <Badge
-                variant="outline"
-                className="mb-6 border-amber-400/60 text-amber-300 text-xs tracking-widest uppercase"
-              >
-                Never run out
-              </Badge>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-4">
-                Join the Inner Circle
-              </h2>
-              <p className="text-white/80 max-w-xl mx-auto mb-8 text-lg">
-                Subscribers get freshly roasted beans before they hit the public shelf — plus up to
-                15% off every order.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
-                  onClick={() =>
-                    document
-                      .getElementById("pricing-calculator")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                >
-                  Calculate My Price
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-white/40 text-white hover:bg-white/10"
-                >
-                  Learn More
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       </section>
+
+      <Separator />
 
       {/* ── FAQ ── */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-14">
-            <Badge
-              variant="outline"
-              className="mb-4 text-xs tracking-widest uppercase border-amber-600/50 text-amber-600"
-            >
-              Got questions?
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">FAQ</h2>
-          </div>
-          <div className="space-y-3">
-            {FAQS.map((faq, i) => (
-              <div
-                key={i}
-                className="border border-border rounded-xl overflow-hidden"
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="w-full flex justify-between items-center px-6 py-5 text-left font-semibold hover:bg-muted/50 transition-colors"
-                >
-                  <span>{faq.q}</span>
-                  <span
-                    className={`ml-4 text-amber-500 text-xl transition-transform duration-200 ${
-                      openFaq === i ? "rotate-45" : ""
-                    }`}
-                  >
-                    +
-                  </span>
-                </button>
-                {openFaq === i && (
-                  <div className="px-6 pb-5 text-muted-foreground text-sm">{faq.a}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
+      <section id="about" className="py-24 max-w-3xl mx-auto px-6">
+        <h2 className="text-3xl font-bold mb-2">Common Questions</h2>
+        <p className="text-muted-foreground mb-10">
+          Everything you need to know before your first bag.
+        </p>
+        <Accordion type="single" collapsible className="w-full">
+          {FAQ.map((item, i) => (
+            <AccordionItem key={i} value={`item-${i}`}>
+              <AccordionTrigger>{item.q}</AccordionTrigger>
+              <AccordionContent>{item.a}</AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-border py-10 px-4">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <span className="text-xl font-black tracking-tighter">
-            DARK<span className="text-amber-500">MATTER</span>
-          </span>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Dark Matter Brew. All rights reserved.
-          </p>
-          <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-foreground transition-colors">
-              Terms
-            </a>
-            <a href="#" className="hover:text-foreground transition-colors">
-              Contact
-            </a>
-          </div>
-        </div>
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-border py-10 text-center text-sm text-muted-foreground">
+        <p className="font-bold tracking-widest uppercase mb-2">Dark Matter Coffee</p>
+        <p>© {new Date().getFullYear()} Dark Matter Coffee Co. All rights reserved.</p>
+        <p className="mt-2 text-xs">
+          Roasted with care somewhere between here and the void.
+        </p>
       </footer>
     </div>
   );
