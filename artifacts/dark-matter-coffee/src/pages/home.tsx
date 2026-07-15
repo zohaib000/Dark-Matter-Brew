@@ -2,12 +2,32 @@ import { useState } from "react";
 import { ArrowRight, Droplets, Flame, Clock, Beaker, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.2, 0.65, 0.3, 0.9] } }
+};
+
+const fadeUpFast = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.2, 0.65, 0.3, 0.9] } }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.2, 0.65, 0.3, 0.9] } }
+};
+
+const slideInLeft = {
+  hidden: { opacity: 0, x: -50 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.2, 0.65, 0.3, 0.9] } }
+};
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 50 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.7, ease: [0.2, 0.65, 0.3, 0.9] } }
 };
 
 const staggerContainer = {
@@ -20,9 +40,22 @@ const staggerContainer = {
   }
 };
 
+const staggerContainerFast = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
 export default function Home() {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,21 +78,45 @@ export default function Home() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1, delay: 0.5 }}
-        className="absolute top-0 left-0 w-full z-40 px-6 py-8 flex justify-between items-center"
+        className="absolute top-0 left-0 w-full z-40 px-6 py-8 flex justify-between items-center backdrop-blur-sm"
       >
-        <div className="text-xl font-display font-bold tracking-widest text-primary uppercase">
+        <motion.div 
+          className="text-xl font-display font-bold tracking-widest text-primary uppercase"
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.2 }}
+        >
           Dark Matter
-        </div>
+        </motion.div>
         <div className="hidden md:flex gap-8 text-sm font-mono tracking-widest text-muted-foreground uppercase">
-          <a href="#roasts" className="hover:text-primary transition-colors">Roasts</a>
-          <a href="#brewing" className="hover:text-primary transition-colors">Method</a>
-          <a href="#subscription" className="hover:text-primary transition-colors">Protocol</a>
+          {[
+            { href: "#roasts", label: "Roasts" },
+            { href: "#brewing", label: "Method" },
+            { href: "#subscription", label: "Protocol" }
+          ].map((item, i) => (
+            <motion.a 
+              key={i}
+              href={item.href} 
+              className="hover:text-primary transition-colors relative"
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              {item.label}
+              <motion.div
+                className="absolute -bottom-1 left-0 right-0 h-[1px] bg-primary"
+                initial={{ scaleX: 0 }}
+                whileHover={{ scaleX: 1 }}
+                transition={{ duration: 0.3 }}
+              />
+            </motion.a>
+          ))}
         </div>
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground rounded-none font-mono uppercase tracking-widest text-xs hidden md:inline-flex">
-            Shop Now
-          </Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground rounded-none font-mono uppercase tracking-widest text-xs hidden md:inline-flex">
+              Shop Now
+            </Button>
+          </motion.div>
         </div>
       </motion.nav>
 
@@ -69,6 +126,7 @@ export default function Home() {
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 2, ease: "easeOut" }}
+          style={{ opacity: heroOpacity, scale: heroScale }}
           className="absolute inset-0 z-0"
         >
           <img 
@@ -100,16 +158,26 @@ export default function Home() {
               We approach roasting as a hard science. Small-batch, precision-controlled, and designed for those who measure their water temperature to the degree.
             </motion.p>
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-6">
-              <a href="#roasts">
+              <motion.a 
+                href="#roasts"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Button className="h-14 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-mono uppercase tracking-widest text-sm w-full sm:w-auto">
                   Explore Roasts
                 </Button>
-              </a>
-              <a href="#brewing">
+              </motion.a>
+              <motion.a 
+                href="#brewing"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
                 <Button variant="outline" className="h-14 px-8 rounded-none border-border hover:bg-secondary hover:text-primary font-mono uppercase tracking-widest text-sm w-full sm:w-auto">
                   Brewing Guide
                 </Button>
-              </a>
+              </motion.a>
             </motion.div>
           </motion.div>
         </div>
@@ -182,12 +250,20 @@ export default function Home() {
                 desc: "Our darkest offering. Viscous, brooding, and devoid of sharp acidity. A heavy, lingering finish."
               }
             ].map((roast, i) => (
-              <motion.div key={i} variants={fadeUp} className="group cursor-pointer">
+              <motion.div 
+                key={i} 
+                variants={fadeUp} 
+                className="group cursor-pointer"
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
                 <div className="relative aspect-[3/4] mb-8 overflow-hidden bg-card">
-                  <img 
+                  <motion.img 
                     src={roast.img} 
                     alt={roast.name}
-                    className="w-full h-full object-cover mix-blend-luminosity opacity-70 group-hover:mix-blend-normal group-hover:opacity-100 group-hover:scale-105 transition-all duration-700 ease-out"
+                    className="w-full h-full object-cover mix-blend-luminosity opacity-70 group-hover:mix-blend-normal group-hover:opacity-100 transition-all duration-700 ease-out"
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
                   />
                   <div className="absolute inset-0 border border-border/50 group-hover:border-primary/50 transition-colors duration-500"></div>
                 </div>
@@ -201,17 +277,39 @@ export default function Home() {
                 <p className="text-muted-foreground text-sm font-light mb-6 line-clamp-2">
                   {roast.desc}
                 </p>
-                <div className="flex flex-wrap gap-2 mb-6">
+                <motion.div 
+                  className="flex flex-wrap gap-2 mb-6"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={staggerContainerFast}
+                >
                   {roast.notes.map((note, j) => (
-                    <span key={j} className="text-xs font-mono border border-border px-2 py-1 text-muted-foreground">
+                    <motion.span 
+                      key={j} 
+                      variants={scaleIn}
+                      className="text-xs font-mono border border-border px-2 py-1 text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-default"
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      transition={{ duration: 0.2 }}
+                    >
                       {note}
-                    </span>
+                    </motion.span>
                   ))}
-                </div>
-                <div className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0 duration-300">
+                </motion.div>
+                <motion.div 
+                  className="flex items-center gap-2 text-primary font-mono text-xs uppercase tracking-widest"
+                  initial={{ opacity: 0, x: -16 }}
+                  whileHover={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <span>Add to Queue</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
+                  <motion.div
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </motion.div>
+                </motion.div>
               </motion.div>
             ))}
           </motion.div>
@@ -274,16 +372,26 @@ export default function Home() {
                 desc: "High pressure, rapid extraction. Concentrated intensity amplifying both sweetness and acidity."
               }
             ].map((method, i) => (
-              <motion.div key={i} variants={fadeUp} className="group relative border-b lg:border-b-0 lg:border-r border-border last:border-0 overflow-hidden">
+              <motion.div 
+                key={i} 
+                variants={fadeUp} 
+                className="group relative border-b lg:border-b-0 lg:border-r border-border last:border-0 overflow-hidden"
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.3 }}
+              >
                 <div className="absolute inset-0">
                   <img src={method.img} alt={method.name} className="w-full h-full object-cover opacity-10 group-hover:opacity-30 transition-opacity duration-700 mix-blend-luminosity" />
                   <div className="absolute inset-0 bg-background/80 group-hover:bg-background/40 transition-colors duration-700"></div>
                 </div>
                 
                 <div className="relative p-12 h-full flex flex-col">
-                  <div className="mb-8 p-4 bg-background/50 backdrop-blur-md inline-block w-fit border border-border/50">
+                  <motion.div 
+                    className="mb-8 p-4 bg-background/50 backdrop-blur-md inline-block w-fit border border-border/50"
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     {method.icon}
-                  </div>
+                  </motion.div>
                   <h3 className="text-2xl font-display font-bold mb-4">{method.name}</h3>
                   <p className="text-muted-foreground font-light mb-12 flex-grow">{method.desc}</p>
                   
@@ -318,18 +426,35 @@ export default function Home() {
             variants={fadeUp}
             className="bg-secondary relative overflow-hidden border border-border"
           >
-            <div className="absolute inset-0 w-1/2 hidden lg:block">
+            <motion.div 
+              className="absolute inset-0 w-1/2 hidden lg:block"
+              initial={{ x: -50, opacity: 0 }}
+              whileInView={{ x: 0, opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, ease: "easeOut" }}
+            >
               <img src="/subscription.jpg" alt="Subscription Protocol" className="w-full h-full object-cover mix-blend-luminosity opacity-40" />
               <div className="absolute inset-0 bg-gradient-to-r from-transparent to-secondary"></div>
-            </div>
+            </motion.div>
             
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 p-12 md:p-20 items-center">
               <div className="hidden lg:block"></div> {/* Spacer for image */}
               <div>
-                <div className="flex items-center gap-4 mb-6">
-                  <Beaker className="w-5 h-5 text-primary" />
+                <motion.div 
+                  className="flex items-center gap-4 mb-6"
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <motion.div
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <Beaker className="w-5 h-5 text-primary" />
+                  </motion.div>
                   <span className="font-mono text-primary tracking-[0.2em] text-xs uppercase">Automated Delivery</span>
-                </div>
+                </motion.div>
                 <h2 className="text-4xl md:text-5xl font-display font-bold tracking-tighter mb-6">
                   THE DARK MATTER<br/>PROTOCOL
                 </h2>
@@ -337,23 +462,41 @@ export default function Home() {
                   Never run out of variables to test. Receive freshly roasted, experimental, and core profiles delivered to your lab on your schedule. Roasted on Tuesday, shipped on Wednesday.
                 </p>
                 
-                <ul className="space-y-4 mb-10">
+                <motion.ul 
+                  className="space-y-4 mb-10"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={staggerContainerFast}
+                >
                   {[
                     "Rotating experimental nano-lots",
                     "Customized delivery intervals",
                     "Early access to limited releases",
                     "Wholesale equipment discounts"
                   ].map((benefit, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 bg-primary rounded-none"></div>
+                    <motion.li key={i} variants={fadeUpFast} className="flex items-center gap-3">
+                      <motion.div 
+                        className="w-1.5 h-1.5 bg-primary rounded-none"
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 + 0.2, duration: 0.3 }}
+                      />
                       <span className="text-sm font-light text-foreground/90">{benefit}</span>
-                    </li>
+                    </motion.li>
                   ))}
-                </ul>
+                </motion.ul>
                 
-                <Button className="h-14 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-mono uppercase tracking-widest text-sm w-full sm:w-auto">
-                  Initiate Protocol
-                </Button>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Button className="h-14 px-8 rounded-none bg-primary text-primary-foreground hover:bg-primary/90 font-mono uppercase tracking-widest text-sm w-full sm:w-auto">
+                    Initiate Protocol
+                  </Button>
+                </motion.div>
               </div>
             </div>
           </motion.div>
@@ -376,7 +519,13 @@ export default function Home() {
               </p>
               
               <form onSubmit={handleSubscribe} className="relative max-w-md">
-                <div className="flex">
+                <motion.div 
+                  className="flex"
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.3 }}
+                >
                   <Input 
                     type="email" 
                     placeholder="Enter email address" 
@@ -393,11 +542,16 @@ export default function Home() {
                   >
                     {isSubmitted ? <CheckCircle2 className="w-4 h-4" /> : "Subscribe"}
                   </Button>
-                </div>
+                </motion.div>
                 {isSubmitted && (
-                  <p className="absolute -bottom-8 left-0 text-primary font-mono text-xs tracking-widest">
+                  <motion.p 
+                    className="absolute -bottom-8 left-0 text-primary font-mono text-xs tracking-widest"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
                     Transmission received. Welcome.
-                  </p>
+                  </motion.p>
                 )}
               </form>
             </motion.div>
@@ -409,23 +563,45 @@ export default function Home() {
               variants={staggerContainer}
               className="grid grid-cols-2 gap-8 font-mono text-sm"
             >
-              <motion.div variants={fadeUp}>
+              <motion.div variants={slideInLeft}>
                 <h4 className="text-primary tracking-widest uppercase mb-6 text-xs">Navigation</h4>
-                <ul className="space-y-4 text-muted-foreground">
-                  <li><a href="#roasts" className="hover:text-primary transition-colors">Our Roasts</a></li>
-                  <li><a href="#brewing" className="hover:text-primary transition-colors">Brewing Guide</a></li>
-                  <li><a href="#subscription" className="hover:text-primary transition-colors">The Protocol</a></li>
-                  <li><a href="#" className="hover:text-primary transition-colors">Equipment</a></li>
-                </ul>
+                <motion.ul 
+                  className="space-y-4 text-muted-foreground"
+                  variants={staggerContainerFast}
+                >
+                  {["Our Roasts", "Brewing Guide", "The Protocol", "Equipment"].map((item, i) => (
+                    <motion.li key={i} variants={fadeUpFast}>
+                      <a 
+                        href={i < 3 ? ["#roasts", "#brewing", "#subscription"][i] : "#"} 
+                        className="hover:text-primary transition-colors inline-block hover:translate-x-1 transition-transform"
+                      >
+                        {item}
+                      </a>
+                    </motion.li>
+                  ))}
+                </motion.ul>
               </motion.div>
-              <motion.div variants={fadeUp}>
+              <motion.div variants={slideInRight}>
                 <h4 className="text-primary tracking-widest uppercase mb-6 text-xs">HQ / Lab</h4>
-                <ul className="space-y-4 text-muted-foreground">
-                  <li>1042 Observable St.</li>
-                  <li>Sector 4, Void City</li>
-                  <li>Open Daily: 0600 - 1400</li>
-                  <li><a href="mailto:comms@darkmatter.coffee" className="hover:text-primary transition-colors">comms@darkmatter.coffee</a></li>
-                </ul>
+                <motion.ul 
+                  className="space-y-4 text-muted-foreground"
+                  variants={staggerContainerFast}
+                >
+                  {[
+                    "1042 Observable St.",
+                    "Sector 4, Void City",
+                    "Open Daily: 0600 - 1400",
+                    { text: "comms@darkmatter.coffee", link: "mailto:comms@darkmatter.coffee" }
+                  ].map((item, i) => (
+                    <motion.li key={i} variants={fadeUpFast}>
+                      {typeof item === 'string' ? item : (
+                        <a href={item.link} className="hover:text-primary transition-colors inline-block hover:translate-x-1 transition-transform">
+                          {item.text}
+                        </a>
+                      )}
+                    </motion.li>
+                  ))}
+                </motion.ul>
               </motion.div>
             </motion.div>
           </div>
